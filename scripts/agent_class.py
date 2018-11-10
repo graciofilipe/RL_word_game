@@ -1,7 +1,7 @@
 import numpy as np
 import itertools
 import random
-from aux_functions import softmax
+from scripts.aux_functions import softmax
 
 
 class Agent:
