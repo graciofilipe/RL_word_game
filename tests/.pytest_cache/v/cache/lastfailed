@@ -1,0 +1,4 @@
+{
+  "test_env.py::test_env_loads": true,
+  "test_string_funs.py": true
+}
