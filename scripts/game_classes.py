@@ -25,6 +25,7 @@ class WordGame:
         self.n_initial_words = len(self.words)
         self.constraints_passed = {}
         self.word_to_guess = word_to_guess
+        self.state = self.solve()
 
         ## create a dictionary mapping between bools and words
         bool_to_list_of_words = defaultdict(list)
@@ -64,12 +65,18 @@ class WordGame:
         self.constraints_passed[guess_word] = number_of_overlapping_letters
 
 
-    def solve(self):
+    def solve(self, return_type='bool'):
         solution_printer = SolutionPrinter(self.word_solver_var,
                                            self.bool_to_list_of_words)
         status = self.solver.SearchForAllSolutions(self.model, solution_printer)
         self.status = status
-        return solution_printer.ReturnWordSolutions()
+        print('\nNumber of solutions found: {}'.format(solution_printer.SolutionCount()))
+        if return_type=='bool':
+            bool_solutions = solution_printer.ReturnBoolSolutions()
+            self.state = bool_solutions
+            return bool_solutions
+        if return_type=='words':
+            return solution_printer.ReturnWordSolutions()
 
     def get_words_in_play(self):
         return self.solve()
@@ -98,3 +105,5 @@ class WordGame:
             terminal_flag = False
 
         return new_state, reward, terminal_flag
+
+

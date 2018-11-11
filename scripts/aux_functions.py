@@ -42,8 +42,6 @@ def compute_word_overlap(word1, word2):
     return overlap_percentage
 
 
-
-
 def softmax(x):
     """Compute softmax values for each sets of scores in x."""
     e_x = np.exp(x - np.max(x))

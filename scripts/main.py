@@ -1,5 +1,5 @@
-from game_classes import WordGame
-from load_dictionary import return_words
+from scripts.game_classes import WordGame
+from scripts.load_dictionary import return_words
 import copy
 import operator
 import random
