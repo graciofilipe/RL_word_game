@@ -1,6 +1,4 @@
-from scripts.load_dictionary import return_words
-from scripts.aux_functions import is_only_letters, has_no_duplicate_letter, does_not_end_with_s, \
-                          word_to_list_of_bools, compute_word_overlap
+from scripts.aux_functions import word_to_list_of_bools, compute_word_overlap
 from ortools.sat.python import cp_model
 from string import ascii_letters as letters
 from scripts.solver_aux import SolutionPrinter
@@ -14,18 +12,11 @@ class WordGame:
     def __init__(self, word_list, length_of_word, word_to_guess=[]):
 
         self.length_of_word = length_of_word
-
-        length_filtered_words = [w for w in word_list if len(w) == length_of_word]
-        filtered_words = filter(is_only_letters, length_filtered_words)
-        filtered_words = filter(has_no_duplicate_letter, filtered_words)
-        filtered_words = filter(does_not_end_with_s, filtered_words)
-
-        self.words = list(set(list(filtered_words)))
+        self.words = word_list
         self.words.sort()
         self.n_initial_words = len(self.words)
         self.constraints_passed = {}
         self.word_to_guess = word_to_guess
-        self.state = self.solve()
 
         ## create a dictionary mapping between bools and words
         bool_to_list_of_words = defaultdict(list)
@@ -54,7 +45,7 @@ class WordGame:
         print('len of list_of_words_in_bool', len(list_of_words_in_bool))
         self.model.AddAllowedAssignments(self.word_solver_var, list_of_words_in_bool)
 
-        #self.state = self.solve()
+        self.state = self.solve()
 
 
     def add_constraint(self, guess_word, number_of_overlapping_letters):
@@ -95,7 +86,7 @@ class WordGame:
         self.add_constraint(guess_word=action,
                             number_of_overlapping_letters=overlap)
 
-        new_state = self.solve()
+        new_state = self.solve(return_type='bool')
 
         if len(new_state)==1:
             reward = 1

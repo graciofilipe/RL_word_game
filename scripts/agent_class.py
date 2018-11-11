@@ -2,12 +2,16 @@ import numpy as np
 import itertools
 import random
 from scripts.aux_functions import softmax
+from scripts.aux_functions import word_to_list_of_bools, compute_word_overlap
+from collections import Counter
 
 
 class Agent:
-    def __init__(self, possible_actions,  epsilon):
+    def __init__(self,  epsilon, possible_actions):
         self.epsilon = epsilon
         self.possible_actions = possible_actions
+        self.word_actions_taken = []
+        self.bool_actions_taken = []
 
     def initialize_w(self):
         # get the number of features, so I know the number of w
@@ -16,7 +20,7 @@ class Agent:
 
     def initialize_th(self):
         # get the number of features, so I know the number of w
-        n_features = 5+5
+        n_features = 6
         self.th = np.array([0 for _ in range(n_features)])
 
     def return_w(self):
@@ -25,11 +29,22 @@ class Agent:
     def return_th(self):
         return self.th
 
+    def add_to_actions_taken(self, word_to_add):
+        self.word_actions_taken += [word_to_add]
+        self.bool_actions_taken += [tuple(word_to_list_of_bools(word_to_add))]
+
+
+
     def state_to_feature_vec(self, state):
-        x_dif = 3 - state[0]
-        y_dif = 3 - state[1]
-        feature_vec = [x_dif, y_dif] + [1]
-        return np.array(feature_vec)
+        n_letters = 26
+        abs_freq = np.array([0 for let in range(n_letters)])
+        for bool_word in state:
+            for i in range(n_letters):
+                abs_freq[i] += bool_word[i]
+        total = np.sum(abs_freq)
+        rel_freq = list(abs_freq/total)
+        n_bools = [len(state)]
+        return rel_freq + n_bools
 
     def state_value_estimate(self, state):
         feature_values = self.state_to_feature_vec(state)
@@ -41,34 +56,45 @@ class Agent:
         return np.array(g)
 
 
+    def rel_freq_of_dot_prod_of_bool_against_background(self, bool, list_of_bools):
+        dot_prod_list = []
+        for word_bool in list_of_bools:
+            dot_prod_list.append(np.dot(a=bool,
+                                        b=word_bool))
+        c = Counter(dot_prod_list)
+        abs_freq = [c.get(i, 0) for i in range(0, 6)]
+        rel_freq = np.array(abs_freq)/len(list_of_bools)
+        return rel_freq
 
-    def state_action_to_feature_vec(self, state, action, environment):
-        # pairwise_iterator = itertools.product(list(state), list(action))
-        environment.set_state(state)
-        next_state, reward, terminal_flag = environment.return_state_and_reward_post_action(action)
-        x_dif = 3 - next_state[0]
-        y_dif = 3 - next_state[1]
-        feature_vec = [x_dif, y_dif] + [1]
-        return np.array(feature_vec)
 
-    def from_state_action_to_q_estimate(self, state, action, environment):
-        feature_values = self.state_action_to_feature_vec(state, action, environment=environment)
+    def state_action_to_feature_vec(self, state, action):
+        action_bool = word_to_list_of_bools(word = action)
+        rel_freq_against_words_left = \
+            self.rel_freq_of_dot_prod_of_bool_against_background(
+            bool=action_bool, list_of_bools=state)
+        rel_freq_against_words_taken = \
+            self.rel_freq_of_dot_prod_of_bool_against_background(
+                bool=action_bool, list_of_bools=self.bool_actions_taken)
+
+        return np.array(list(rel_freq_against_words_left) + list(rel_freq_against_words_taken))
+
+    def from_state_action_to_q_estimate(self, state, action):
+        feature_values = self.state_action_to_feature_vec(state, action)
         val_estimate = np.dot(a=self.th, b=feature_values)
         return val_estimate
 
-    def get_state_action_values(self, state_to_interrogate, environment):
+    def get_state_action_values(self, state_to_interrogate):
         value_list = []
         possible_actions = self.possible_actions
         #random.shuffle(possible_actions)
         for action in possible_actions:
             val_estimate = self.from_state_action_to_q_estimate(state=state_to_interrogate,
-                                                                action=action,
-                                                                environment=environment)
+                                                                action=action)
             value_list.append(val_estimate)
         return value_list
 
-    def get_action_from_policy(self, state_to_interrogate, environment):
-        value_list = self.get_state_action_values(state_to_interrogate, environment)
+    def get_action_from_policy(self, state_to_interrogate):
+        value_list = self.get_state_action_values(state_to_interrogate)
         possible_actions = self.possible_actions
         soft_values = softmax(value_list)
         action_indx_list = list(range(len(possible_actions)))
@@ -78,7 +104,7 @@ class Agent:
 
 
     def ln_policy_gradient(self, state, action, environment):
-        x = self.state_action_to_feature_vec(state, action, environment)
+        x = self.state_action_to_feature_vec(state, action)
         z = np.dot(a=self.th, b=x)
         sm = softmax(z)
         out = x-sm
@@ -90,7 +116,8 @@ class Agent:
         if r < self.epsilon:
             return self.possible_actions[np.random.choice(len(self.possible_actions))]
         else:
-            return self.get_action_from_policy(state_to_interrogate=state, environment=environment)
+            return self.get_action_from_policy(state_to_interrogate=state,
+                                               environment=environment)
 
     def update_w(self, new_w):
         assert len(self.w) == len(new_w)
@@ -108,7 +135,3 @@ class Agent:
     def increment_th(self, th_increment):
         assert len(self.w) == len(th_increment)
         self.th = np.array(self.th) + np.array(th_increment)
-
-
-
-

@@ -1,3 +1,5 @@
 {
+  "test_agent.py": true,
+  "test_env.py": true,
   "test_string_funs.py": true
 }
