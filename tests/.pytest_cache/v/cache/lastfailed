@@ -1,5 +1,6 @@
 {
   "test_agent.py": true,
   "test_env.py": true,
+  "test_run_ac.py::test_it_runs": true,
   "test_string_funs.py": true
 }

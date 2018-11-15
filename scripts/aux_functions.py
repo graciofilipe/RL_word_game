@@ -38,8 +38,8 @@ def compute_word_overlap(word1, word2):
     s2 = set(list(word2))
     word_length = len(s1)
     overlap = len(s1.intersection(s2))
-    overlap_percentage = overlap/word_length
-    return overlap_percentage
+    #overlap_percentage = overlap/word_length
+    return overlap
 
 
 def softmax(x):

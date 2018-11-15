@@ -3,7 +3,8 @@ from scripts.aux_functions import is_only_letters, has_no_duplicate_letter, does
 
 
 def load_words():
-    word_table = pd.read_table('../data/words.txt', header=0)
+    #word_table = pd.read_table('../data/words.txt', header=0)
+    word_table = pd.read_table('../data/reduced_words.txt', header=0)
     word_list = list(map(str, word_table['words_header']))
     word_list = [w.lower() for w in word_list]
     return word_list

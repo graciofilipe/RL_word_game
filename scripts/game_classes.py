@@ -81,17 +81,16 @@ class WordGame:
 
     def return_state_and_reward_post_action(self, action):
 
-        overlap = compute_word_overlap(action, self.word_to_guess)
-
-        self.add_constraint(guess_word=action,
-                            number_of_overlapping_letters=overlap)
-
-        new_state = self.solve(return_type='bool')
-
-        if len(new_state)==1:
+        if action ==  self.word_to_guess:
             reward = 1
             terminal_flag = True
+            new_state = word_to_list_of_bools(action)
+
         else:
+            overlap = compute_word_overlap(action, self.word_to_guess)
+            self.add_constraint(guess_word=action,
+                                number_of_overlapping_letters=overlap)
+            new_state = self.solve(return_type='bool')
             reward = -1
             terminal_flag = False
 

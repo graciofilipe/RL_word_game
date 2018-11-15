@@ -15,7 +15,10 @@ def run_actor_critic_traces(agent,
     n_th = len(agent.return_th())
 
 
-    for _ in range(n_iter):
+    for i in range(n_iter):
+
+        environment.word_to_guess = ['afley', 'achen', 'admit'][i]
+
         state = start_state
         environment.set_state(state)
         z_w = np.array([0 for _ in range(n_w)])
@@ -24,9 +27,10 @@ def run_actor_critic_traces(agent,
         terminal_flag = False
         while terminal_flag == False:
 
-            action = agent.return_action(state, environment)
+            action = agent.return_action(state)
             new_state, reward, terminal_flag = environment.return_state_and_reward_post_action(action)
             environment.set_state(new_state)
+            agent.add_to_actions_taken(action)
 
             new_state_value = agent.state_value_estimate(new_state)
             state_value = agent.state_value_estimate(state)
@@ -38,7 +42,7 @@ def run_actor_critic_traces(agent,
             z_w = gama*lambda_w*z_w + value_estimate_gradient
 
 
-            ln_policy_gradient = agent.ln_policy_gradient(state=state, action=action, environment=environment)
+            ln_policy_gradient = agent.ln_policy_gradient(state=state, action=action)
             z_th = gama*lambda_th*z_th + I*ln_policy_gradient
 
             w_inc = alpha_w*delta*z_w
@@ -50,6 +54,8 @@ def run_actor_critic_traces(agent,
             I = gama*I
             state = new_state
 
+            x = len(state)
+            y=1
     return agent
 
 
