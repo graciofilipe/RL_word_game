@@ -10,10 +10,14 @@ class Agent:
     def __init__(self,  epsilon, possible_actions):
         self.epsilon = epsilon
         self.possible_actions = possible_actions
+        self.possible_solutions = possible_actions
         self.word_actions_taken = []
         self.bool_actions_taken = []
         self.initialize_w()
         self.initialize_th()
+
+    def update_possible_solutions(self, possible_solutions):
+        self.possible_solutions = possible_solutions
 
     def initialize_w(self):
         # get the number of features, so I know the number of w
@@ -34,8 +38,7 @@ class Agent:
     def add_to_actions_taken(self, word_to_add):
         self.word_actions_taken += [word_to_add]
         self.bool_actions_taken += [tuple(word_to_list_of_bools(word_to_add))]
-
-
+        self.possible_actions.remove(word_to_add)
 
     def state_to_feature_vec(self, state):
         n_letters = 26
@@ -57,7 +60,6 @@ class Agent:
         g = self.state_to_feature_vec(state)
         return np.array(g)
 
-
     def rel_freq_of_dot_prod_of_bool_against_background(self, bool, list_of_bools):
         if len(list_of_bools)==0:
             return [0 for i in range(0, 6)]
@@ -70,7 +72,6 @@ class Agent:
             abs_freq = [c.get(i, 0) for i in range(0, 6)]
             rel_freq = np.array(abs_freq)/np.sum(abs_freq)
             return rel_freq
-
 
     def state_action_to_feature_vec(self, state, action):
         action_bool = word_to_list_of_bools(word = action)
@@ -92,9 +93,9 @@ class Agent:
 
     def get_state_action_values(self, state_to_interrogate):
         value_list = []
-        possible_actions = self.possible_actions
+        possible_solutions = self.possible_solutions
         #random.shuffle(possible_actions)
-        for action in possible_actions:
+        for action in possible_solutions:
             val_estimate = self.from_state_action_to_q_estimate(state=state_to_interrogate,
                                                                 action=action)
             value_list.append(val_estimate)
@@ -102,13 +103,11 @@ class Agent:
 
     def get_action_from_policy(self, state_to_interrogate):
         value_list = self.get_state_action_values(state_to_interrogate)
-        possible_actions = self.possible_actions
         soft_values = softmax(value_list)
-        action_indx_list = list(range(len(possible_actions)))
+        action_indx_list = list(range(len(state_to_interrogate)))
         chosen_indx = np.random.choice(a=action_indx_list, p=soft_values)
-        chosen_action = possible_actions[chosen_indx]
+        chosen_action = state_to_interrogate[chosen_indx]
         return chosen_action
-
 
     def ln_policy_gradient(self, state, action):
         x = self.state_action_to_feature_vec(state, action)
@@ -116,7 +115,6 @@ class Agent:
         sm = softmax(z)
         out = x-sm
         return out
-
 
     def return_action(self, state):
         r = np.random.uniform()
@@ -132,7 +130,6 @@ class Agent:
     def update_th(self, new_th):
         assert len(self.th) == len(new_th)
         self.th = new_th
-
 
     def increment_w(self, w_increment):
         assert len(self.w) == len(w_increment)

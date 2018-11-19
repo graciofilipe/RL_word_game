@@ -41,7 +41,6 @@ def run_actor_critic_traces(agent,
             value_estimate_gradient = agent.state_value_estimate_gradient(state=state)
             z_w = gama*lambda_w*z_w + value_estimate_gradient
 
-
             ln_policy_gradient = agent.ln_policy_gradient(state=state, action=action)
             z_th = gama*lambda_th*z_th + I*ln_policy_gradient
 
@@ -53,6 +52,8 @@ def run_actor_critic_traces(agent,
 
             I = gama*I
             state = new_state
+
+            agent.update_possible_solutions(state)
 
             x = len(state)
             y=1
